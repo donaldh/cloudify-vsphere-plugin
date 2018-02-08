@@ -1650,7 +1650,7 @@ class ServerClient(VsphereClient):
         logger().debug("Powering on VM {0}".format(vm_name))
         task = vm.obj.PowerOn()
         try:
-            self._wait_vm_running(task, adaptermaps)
+            self._wait_for_task(task)
         except Exception as e:
             logger().warn("Exception while powering on VM {0} - {1}".format(vm_name, str(e)))
             raise NonRecoverableError(
