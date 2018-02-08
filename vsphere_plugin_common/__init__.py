@@ -1425,9 +1425,9 @@ class ServerClient(VsphereClient):
             )
             relospec.host = host.obj
 
-        nicspec = vim.vm.device.VirtualDeviceSpec()
         for device in template_vm.config.hardware.device:
             if hasattr(device, 'macAddress'):
+                nicspec = vim.vm.device.VirtualDeviceSpec()
                 nicspec.device = device
                 logger().warn(
                     'Removing network adapter from template. '
@@ -1514,7 +1514,7 @@ class ServerClient(VsphereClient):
         clonespec = vim.vm.CloneSpec()
         clonespec.location = relospec
         clonespec.config = vmconf
-        clonespec.powerOn = True
+        clonespec.powerOn = False
         clonespec.template = False
 
         if adaptermaps:
@@ -1609,7 +1609,7 @@ class ServerClient(VsphereClient):
             logger().debug(
                 "Task info: \n%s." % "".join(
                     "%s: %s" % item for item in vars(task).items()))
-            self._wait_vm_running(task, adaptermaps)
+            self._wait_for_task(task)
         except task.info.error:
             raise NonRecoverableError(
                 "Error during executing VM creation task. VM name: \'{0}\'."
@@ -1620,6 +1620,39 @@ class ServerClient(VsphereClient):
             vm_name,
             use_cache=False,
         )
+
+        dev_changes = []
+        for dev in vm.obj.config.hardware.device:
+            if isinstance(dev, vim.vm.device.VirtualEthernetCard):
+                nic_spec = vim.vm.device.VirtualDeviceSpec()
+                nic_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+                nic_spec.device = dev
+                nic_spec.device.key = dev.key
+                connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+                connectable.connected = True
+                connectable.startConnected = True
+                nic_spec.device.connectable = connectable
+
+                dev_changes.append(nic_spec)
+
+        spec = vim.vm.ConfigSpec()
+        spec.deviceChange = dev_changes
+        task = vm.obj.Reconfigure(spec=spec)
+        try:
+            self._wait_for_task(task)
+        except task.info.error:
+            raise NonRecoverableError(
+                "Error during executing VM create/config task. VM name: \'{0}\'."
+                .format(vm_name))
+
+        task = vm.obj.PowerOn()
+        try:
+            self._wait_vm_running(task, adaptermaps)
+        except task.info.error:
+            raise NonRecoverableError(
+                "Error during VM power on task. VM name: \'{0}\'."
+                .format(vm_name))
+
         ctx.instance.runtime_properties[NETWORKS] = \
             self.get_vm_networks(vm)
         logger().debug('Updated runtime properties with network information')
