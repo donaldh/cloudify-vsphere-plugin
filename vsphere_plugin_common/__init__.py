@@ -1652,7 +1652,7 @@ class ServerClient(VsphereClient):
         try:
             self._wait_vm_running(task, adaptermaps)
         except Exception as e:
-            logger.warn("Exception while powering on VM {0} - {1}".format(vm_name, str(e)))
+            logger().warn("Exception while powering on VM {0} - {1}".format(vm_name, str(e)))
             raise NonRecoverableError(
                 "Error during VM power on task. VM name: \'{0}\'."
                 .format(vm_name))
