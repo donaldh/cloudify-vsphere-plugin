@@ -1482,6 +1482,10 @@ class ServerClient(VsphereClient):
                     vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
                 nicspec.device.backing.network = network_obj.obj
                 nicspec.device.backing.deviceName = network_name
+            nicspec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+            nicspec.device.connectable.startConnected = True
+            nicspec.device.connectable.connected = True
+            nicspec.device.connectable.allowGuestControl = True
             devices.append(nicspec)
 
             if use_dhcp:
