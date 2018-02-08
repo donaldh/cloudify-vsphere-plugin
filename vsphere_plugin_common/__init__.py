@@ -1637,6 +1637,8 @@ class ServerClient(VsphereClient):
 
         spec = vim.vm.ConfigSpec()
         spec.deviceChange = dev_changes
+        logger().debug(
+            "Reconfiguring NICs to be connected on VM {0}".format(vm_name))
         task = vm.obj.Reconfigure(spec=spec)
         try:
             self._wait_for_task(task)
@@ -1645,6 +1647,7 @@ class ServerClient(VsphereClient):
                 "Error during executing VM create/config task. VM name: \'{0}\'."
                 .format(vm_name))
 
+        logger().debug("Powering on VM {0}".format(vm_name))
         task = vm.obj.PowerOn()
         try:
             self._wait_vm_running(task, adaptermaps)
@@ -1652,6 +1655,8 @@ class ServerClient(VsphereClient):
             raise NonRecoverableError(
                 "Error during VM power on task. VM name: \'{0}\'."
                 .format(vm_name))
+
+        logger().debug("VM {0} powered on".format(vm_name))
 
         ctx.instance.runtime_properties[NETWORKS] = \
             self.get_vm_networks(vm)
