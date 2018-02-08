@@ -1659,6 +1659,12 @@ class ServerClient(VsphereClient):
 
         logger().debug("VM {0} powered on".format(vm_name))
 
+        vm = self._get_obj_by_name(
+            vim.VirtualMachine,
+            vm_name,
+            use_cache=False,
+        )
+
         ctx.instance.runtime_properties[NETWORKS] = \
             self.get_vm_networks(vm)
         logger().debug('Updated runtime properties with network information')
