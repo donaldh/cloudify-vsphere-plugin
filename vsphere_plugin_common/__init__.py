@@ -1602,15 +1602,15 @@ class ServerClient(VsphereClient):
         logger().info(
             'Cloning {server} from {template}.'.format(
                 server=vm_name, template=template_name))
-        task = template_vm.obj.Clone(folder=destfolder,
-                                     name=vm_name,
-                                     spec=clonespec)
+        create_task = template_vm.obj.Clone(folder=destfolder,
+                                            name=vm_name,
+                                            spec=clonespec)
         try:
             logger().debug(
                 "Task info: \n%s." % "".join(
-                    "%s: %s" % item for item in vars(task).items()))
-            self._wait_for_task(task)
-        except task.info.error:
+                    "%s: %s" % item for item in vars(create_task).items()))
+            self._wait_for_task(create_task)
+        except create_task.info.error:
             raise NonRecoverableError(
                 "Error during executing VM creation task. VM name: \'{0}\'."
                 .format(vm_name))
@@ -1671,7 +1671,7 @@ class ServerClient(VsphereClient):
 
         self.add_custom_values(vm, custom_attributes or {})
 
-        return task.info.result
+        return create_task.info.result
 
     def start_server(self, server):
         if self.is_server_poweredon(server):
